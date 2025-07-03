@@ -31,6 +31,8 @@ screen_width = root.winfo_screenwidth()
 canvas_height = 150
 push_path = 'robby/push.png'
 jump_path = 'robby/jump.png'
+original_image = Image.open()#####
+death = ImageTk.PhotoImage(original_image)
 def choose_character():
     global select
     window.withdraw()
@@ -38,19 +40,21 @@ def choose_character():
     select.title("Choose Character")
     select.configure(bg='red')
     select.geometry(f"{window_width}x{window_height}+{x}+{y}")
+    select.wm_attributes("-transparentcolor", "grey") 
     paths ={"robby":"robby/icon.png"}
     buttons=[]
     char_images = [] 
     for i, (key, value) in enumerate(paths.items()):
         original_image = Image.open(value)
-        resized_image = original_image.resize((100, 100))
-        photo = ImageTk.PhotoImage(resized_image)
+        #resized_image = original_image.resize((100, 100))
+        photo = ImageTk.PhotoImage(original_image)
         char_images.append(photo)
 
         char_button = tk.Button(select, image=photo, command=lambda k=key: save_char(k),
-                                bg="white", bd=0)
+                                bg="red", bd=0)
+        char_button.image = photo 
         char_button.grid(row=0, column=i, padx=10, pady=10)
-        char_label = tk.Label(select, text = key,bg = "blue", font=("Modern No. 20", 50), fg="white")
+        char_label = tk.Label(select, text = key,bg = "blue", font=("Modern No. 20", 10), fg="white")
         char_label.grid(row =1, column = i, padx=10, pady=10)
 def save_char(which):
     push_path = f"{which}/push.png"
@@ -59,7 +63,7 @@ def save_char(which):
     select.destroy()
 ###############################################
 def load_sprites():
-    global rpush, rjump, 
+    global rpush, rjump 
     sprite_sheet_pil = Image.open(push_path)
     resized_image = sprite_sheet_pil.resize((256, 384))
     sprite_sheet_image = ImageTk.PhotoImage(resized_image)
@@ -162,6 +166,7 @@ class Obstacle:
             char_coords[3] > obs_coords[1] and char_coords[1] < obs_coords[3]):
             print("💥 Collision detected!")
             collision =True
+            canvas.itemconfig(character, image=death)
             # root.destroy()  # Uncomment to stop game on collision
 
     def move_obstacle(self):
@@ -215,7 +220,7 @@ def skate(event=None):
 # Key bind
 root.bind("<space>", start_jump)
 def start_game():
-    global character, start_time, canvas
+    global character, start_time, canvas, current_image_index  
     current_image_index =0
     load_sprites()
     window.destroy()
@@ -226,7 +231,7 @@ def start_game():
     start_time = time.time()
     collsion = False
     difficulty = 0.1
-    character = canvas.create_image(100, canvas_height-128, image=current_image, anchor="nw")  # starting position
+    character = canvas.create_image(100, canvas_height-128, image=rpush[0], anchor="nw")  # starting position
     skate()
     run_game()
 def run_game():
