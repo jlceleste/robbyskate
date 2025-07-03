@@ -2,6 +2,8 @@ import tkinter as tk
 from PIL import Image, ImageTk
 import time
 import random
+import json
+import os
 
 # Setup window
 root = tk.Tk()
@@ -29,10 +31,13 @@ choose.grid(row =1, column = 0)
 # Canvas setup
 screen_width = root.winfo_screenwidth()
 canvas_height = 150
+score_file = "scores.json"
+with open(score_file, "r") as f:
+    json.load(f)
 push_path = 'robby/push.png'
 jump_path = 'robby/jump.png'
-original_image = Image.open()#####
-death = ImageTk.PhotoImage(original_image)
+#original_image = Image.open()#####
+#death = ImageTk.PhotoImage(original_image)
 def choose_character():
     global select
     window.withdraw()
@@ -164,9 +169,11 @@ class Obstacle:
 
         if (char_coords[2] > obs_coords[0] and char_coords[0] < obs_coords[2] and
             char_coords[3] > obs_coords[1] and char_coords[1] < obs_coords[3]):
+            canvas.destroy()
             print("💥 Collision detected!")
+        
             collision =True
-            canvas.itemconfig(character, image=death)
+            #canvas.itemconfig(character, image=death)
             # root.destroy()  # Uncomment to stop game on collision
 
     def move_obstacle(self):
@@ -220,7 +227,7 @@ def skate(event=None):
 # Key bind
 root.bind("<space>", start_jump)
 def start_game():
-    global character, start_time, canvas, current_image_index  
+    global character, start_time, canvas, current_image_index, slushie_points_label 
     current_image_index =0
     load_sprites()
     window.destroy()
@@ -235,15 +242,33 @@ def start_game():
     skate()
     run_game()
 def run_game():
+    global elapsed_time
     if not collision:
         elapsed_time = time.time() - start_time
-        difficulty = min(0.1 + 0.7 * elapsed_time / 300, 0.7)
+        difficulty = min(0.25  + 0.7 * elapsed_time / 300, 0.7)
         if random.choices([1, 0], weights=[difficulty, 1 - difficulty], k=1)[0] == 1:
             O = Obstacle(canvas)
+            s = Slushie(canvas,50,'blue' )
         print(difficulty)
         root.after(1000, run_game)
     else:
         stop_game()
+def stop_game():
+    with open(score_file, "r") as f:
+        data = json.load(f)
+    updated = False
+
+    
+    data["slushies"] += slushie_points
+    updated = True
+    if elapsed_time > data["high_score"]:
+        data["high_score"] = elapsed_time
+        updated = True
+
+    if updated:
+        with open(score_file, "w") as f:
+            json.dump(data, f)
+    
 
 # Start game
 #O = Obstacle(canvas)
@@ -251,3 +276,4 @@ def run_game():
 #s = Slushie(c   anvas,270,'red' )
 
 root.mainloop()
+ 
