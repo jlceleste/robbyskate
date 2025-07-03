@@ -29,6 +29,8 @@ choose.grid(row =1, column = 0)
 # Canvas setup
 screen_width = root.winfo_screenwidth()
 canvas_height = 150
+push_path = 'robby/push.png'
+jump_path = 'robby/jump.png'
 def choose_character():
     global select
     window.withdraw()
@@ -48,59 +50,61 @@ def choose_character():
         char_button = tk.Button(select, image=photo, command=lambda k=key: save_char(k),
                                 bg="white", bd=0)
         char_button.grid(row=0, column=i, padx=10, pady=10)
+        char_label = tk.Label(select, text = key,bg = "blue", font=("Modern No. 20", 50), fg="white")
+        char_label.grid(row =1, column = i, padx=10, pady=10)
 def save_char(which):
-    global push_path, jump_path
     push_path = f"{which}/push.png"
     jump_path = f"{which}/jump.png"
     window.deconify()
     select.destroy()
 ###############################################
-sprite_sheet_pil = Image.open(push_path)
-resized_image = sprite_sheet_pil.resize((256, 384))
-sprite_sheet_image = ImageTk.PhotoImage(resized_image)
-current_image_index =0
-rpush = []
-sprite_size = 128
-sprite_count = 5
-sprites_added = 0
+def load_sprites():
+    global rpush, rjump, 
+    sprite_sheet_pil = Image.open(push_path)
+    resized_image = sprite_sheet_pil.resize((256, 384))
+    sprite_sheet_image = ImageTk.PhotoImage(resized_image)
+    rpush = []
+    sprite_size = 128
+    sprite_count = 5
+    sprites_added = 0
 
-for i in range(3):  # rows
-    for j in range(2):  # columns
-        if sprites_added >= sprite_count:
-            break
-        sprite_x = j * sprite_size
-        sprite_y = i * sprite_size
-        cropped_sprite_pil = resized_image.crop((
-            sprite_x, sprite_y, sprite_x + sprite_size, sprite_y + sprite_size
-        ))
-        cropped_sprite_tk = ImageTk.PhotoImage(cropped_sprite_pil)
-        rpush.append(cropped_sprite_tk)
-        sprites_added += 1
-current_image = rpush[0]
-item = rpush[0]
-rpush.extend([item]*10)
+    for i in range(3):  # rows
+        for j in range(2):  # columns
+            if sprites_added >= sprite_count:
+                break
+            sprite_x = j * sprite_size
+            sprite_y = i * sprite_size
+            cropped_sprite_pil = resized_image.crop((
+                sprite_x, sprite_y, sprite_x + sprite_size, sprite_y + sprite_size
+            ))
+            cropped_sprite_tk = ImageTk.PhotoImage(cropped_sprite_pil)
+            rpush.append(cropped_sprite_tk)
+            sprites_added += 1
+    current_image = rpush[0]
+    item = rpush[0]
+    rpush.extend([item]*10)
 
 #############################################
-sprite_sheet_pil = Image.open(jump_path)
-resized_image = sprite_sheet_pil.resize((384, 384))
-sprite_sheet_image = ImageTk.PhotoImage(resized_image)
-rjump = []
-sprite_size = 128
-sprite_count = 8
-sprites_added = 0
+    sprite_sheet_pil = Image.open(jump_path)
+    resized_image = sprite_sheet_pil.resize((384, 384))
+    sprite_sheet_image = ImageTk.PhotoImage(resized_image)
+    rjump = []
+    sprite_size = 128
+    sprite_count = 8
+    sprites_added = 0
 
-for i in range(3):  # rows
-    for j in range(3):  # columns
-        if sprites_added >= sprite_count:
-            break
-        sprite_x = j * sprite_size
-        sprite_y = i * sprite_size
-        cropped_sprite_pil = resized_image.crop((
-            sprite_x, sprite_y, sprite_x + sprite_size, sprite_y + sprite_size
-        ))
-        cropped_sprite_tk = ImageTk.PhotoImage(cropped_sprite_pil)
-        rjump.append(cropped_sprite_tk)
-        sprites_added += 1
+    for i in range(3):  # rows
+        for j in range(3):  # columns
+            if sprites_added >= sprite_count:
+                break
+            sprite_x = j * sprite_size
+            sprite_y = i * sprite_size
+            cropped_sprite_pil = resized_image.crop((
+                sprite_x, sprite_y, sprite_x + sprite_size, sprite_y + sprite_size
+            ))
+            cropped_sprite_tk = ImageTk.PhotoImage(cropped_sprite_pil)
+            rjump.append(cropped_sprite_tk)
+            sprites_added += 1
 #################################################
 # Physics variables
 gravity = 1
@@ -212,7 +216,9 @@ def skate(event=None):
 root.bind("<space>", start_jump)
 def start_game():
     global character, start_time, canvas
-    window   .destroy()
+    current_image_index =0
+    load_sprites()
+    window.destroy()
     canvas = tk.Canvas(root, width=screen_width, height=canvas_height, bg="white", bd=0, highlightthickness=0)
     canvas.pack()
     slushie_points_label = canvas.create_text(0, 0, text=slushie_points,
