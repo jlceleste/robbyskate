@@ -1,4 +1,11 @@
 {
   "slushies": 0,
-  "high_score": 0
+  "high_score": 0,
+  "unlocked_characters": {
+    "robby": true,
+    "nathan": false,
+    "curtis": false,
+    "spider_man": false,
+    "big_robby": false
+  }
 }
