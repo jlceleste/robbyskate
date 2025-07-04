@@ -17,32 +17,45 @@ window.title("Robby Skate")
 window.configure(bg='red')
 screen_width = window.winfo_screenwidth()
 screen_height = window.winfo_screenheight()
-window_width = 550
-window_height = 150
+window_width = 700
+window_height = 200
 x = (screen_width // 2) - (window_width // 2)
 y = (screen_height // 2) - (window_height // 2)
 window.columnconfigure(0, weight =1)
 window.columnconfigure(1, weight =1)
-window.columnconfigure(2, weight =1)
 window.geometry(f"{window_width}x{window_height}+{x}+{y}")
-title = tk.Label(window, text = "Robby Skate", bg="red", font=("Terminal", 50), fg="white")
-title.grid(row =0, column = 0, columnspan=3, sticky = "news")
-start_button = tk.Button(window, text = "Start Game", bd =10, bg = "blue",command = lambda:start_game(), font=("Terminal", 15), fg="white")
-start_button.grid(row =2, column = 1)
-choose = tk.Button(window, text = "Choose Character", bg = "red",command = lambda:choose_character(), bd =10,font=("Terminal", 15), fg="white")
-choose.grid(row =2, column = 0)
+root.geometry(f"{screen_width}x{screen_height}+0+{y}")
+title = tk.Label(window, text = "RobbySkate", bg="red", font=("Terminal", 50), fg="white")
+title.grid(row =0, column = 0, columnspan=2, sticky = "news")
+start_button = tk.Button(window, text = "   Start Game", bd =10, bg = "blue",command = lambda:start_game(), font=("Terminal", 15), fg="white")
+start_button.grid(row =3, column = 0, columnspan = 2,sticky = "news")
+choose = tk.Button(window, text = "Character", bg = "red",command = lambda:choose_character(), bd =10,font=("Terminal", 15), fg="white")
+choose.grid(row =2, column = 0,sticky = "news")
 # Canvas setup
 screen_width = root.winfo_screenwidth()
-canvas_height = 150
 score_file = "scores.json"
 with open(score_file, "r") as f:
     scores = json.load(f)
 high_score = scores["high_score"]
 slushies = scores["slushies"]
-hs = tk.Label(window, text = f"high score: {high_score:.2f}", bg="red", font=("Terminal", 15), fg="white")
-hs.grid(row =1, column = 0, columnspan = 3,sticky = "news")
-sl = tk.Label(window, text = f"slushies: {slushies}", bg="red", font=("Terminal", 15), fg="white")
-sl.grid(row =2, column = 2, columnspan = 3,sticky = "news")
+hs = tk.Label(window, text = f"high score: {high_score:.2f}", highlightthickness=5, highlightbackground="red",bg="blue", font=("Terminal", 15), fg="white")
+hs.grid(row =1, column = 0,sticky = "news")
+sl = tk.Label(window, text = f"slushies: {slushies}", highlightthickness=5, highlightbackground="red",bg="blue",font=("Terminal", 15), fg="white")
+sl.grid(row =1, column = 1,sticky = "news")
+def show_note():
+    note = tk.Toplevel(window)
+    note.title("Note")
+    note.configure(bg="lightyellow")
+    note.geometry(f"{200}x{200}+{x+window_width}+{y}")
+    note.resizable(False, False)
+
+    tk.Label(note, text="Robby Tip:\nCollect slushies to unlock characters!", 
+             bg="lightyellow", font=("Terminal", 12), wraplength=220, justify="left").pack(pady=10, padx=10)
+    tk.Button(note, text="Close", command=note.destroy, font=("Terminal", 10), bg="blue", fg="white").pack(pady=5)
+
+# Add this to your layout:
+notes_button = tk.Button(window, text="Notes", bg="red", command=show_note, bd=10, font=("Terminal", 15), fg="white")
+notes_button.grid(row=2, column=1,sticky = "news")
 push_path = 'robby/push.png'
 jump_path = 'robby/jump.png'
 #original_image = Image.open()#####
@@ -69,21 +82,21 @@ def render_select():
             photo = ImageTk.PhotoImage(original_image)
             char_images.append(photo)
             char_button = tk.Button(select, image=photo, command=lambda k=key: save_char(k),
-                                bg="red", bd=0)
+                                bg="red", bd=5)
             char_button.image = photo 
             char_button.grid(row=1, column=i, padx=10)
             char_label = tk.Label(select, text = key,bg = "blue", font=("Terminal", 10), fg="white")
-            char_label.grid(row =2, column = i, padx=10)
+            char_label.grid(row =2, column = i, padx=10, pady=10)
         else:
             original_image = Image.open(key +'/shadow.png')
             photo = ImageTk.PhotoImage(original_image)
             char_images.append(photo)
             char_button = tk.Button(select, image=photo, command=lambda k=key: unlock(k),
-                                bg="red", bd=0)
+                                bg="red", bd=5)
             char_button.image = photo
             char_button.grid(row=1, column=i, padx=10)
             char_label = tk.Label(select, text = "cost: 25",bg = "blue", font=("Terminal", 10), fg="white")
-            char_label.grid(row =2, column = i, padx=10)
+            char_label.grid(row =2, column = i, padx=10,pady=10)
 def unlock(which):
     global slushies
     if slushies >= 25:
@@ -149,7 +162,6 @@ def load_sprites():
 gravity = 1
 dy = 0
 dy_top=0
-ground = 150
 jumping = False
 fps = 60
 spf = int(1000/fps)
@@ -160,35 +172,42 @@ collision = False
 class Slushie:
     def __init__(self, canvas, y_placement, color):
         self.canvas = canvas
-        self.slushie=canvas.create_oval(screen_width,y_placement,screen_width+10,y_placement+10, fill=color)
+        self.color = color
+        self.collected = False  # ✅ Track if collected
+        self.slushie = canvas.create_oval(screen_width, y_placement, screen_width + 10, y_placement + 10, fill=color)
         self.move_slushie()
-        self.color=color
-        
+
     def check_collision(self):
-        global slushie_points, collision
-        if collision:
+        global slushie_points, collision, slushie_points_label
+        if self.collected or collision:
             return
+
         char_coords = canvas.bbox(character)
         slu_coords = canvas.bbox(self.slushie)
+
         if char_coords is None or slu_coords is None:
             return
+
         if (char_coords[2] > slu_coords[0] and char_coords[0] < slu_coords[2] and
             char_coords[3] > slu_coords[1] and char_coords[1] < slu_coords[3]):
-            print("slushie")
+            
+            print("Slushie collected!")
             if self.color == 'blue':
                 slushie_points += 3
             elif self.color == 'green':
                 slushie_points += 2
             elif self.color == 'red':
                 slushie_points += 1
+
             canvas.itemconfig(slushie_points_label, text=slushie_points)
             canvas.delete(self.slushie)
-                
+            self.collected = True  
+
     def move_slushie(self):
-        self.canvas.move(self.slushie, speed, 0)
-        slu_coords = self.canvas.coords(self.slushie)
-        self.check_collision()
-        self.canvas.after(spf, self.move_slushie)
+        if not self.collected and not collision:
+            self.canvas.move(self.slushie, speed, 0)
+            self.check_collision()
+            self.canvas.after(spf, self.move_slushie)
 class Obstacle:
     def __init__(self, canvas):
         self.canvas = canvas
@@ -261,48 +280,58 @@ def skate(event=None):
 # Key bind
 root.bind("<space>", start_jump)
 def start_game():
-    global character, start_time, canvas, current_image_index, slushie_points_label, slushie_points
+    global character, start_time, canvas, current_image_index, ground, collision, slushie_points_label, slushie_points, canvas_height,ground
+    if 'canvas' in globals() and canvas.winfo_exists():
+        canvas.destroy()
+    canvas_width = screen_width
+    canvas_height = 200
+    x = (screen_width // 2) - (canvas_width // 2)
+    y = (screen_height // 2) - (canvas_height // 2)
     slushie_points = 0
     current_image_index =0
     load_sprites()
+    ground = canvas_height
+    print(ground)
     window.withdraw()
+    print(screen_width)
     canvas = tk.Canvas(root, width=screen_width, height=canvas_height, bg="white", bd=0, highlightthickness=0)
     canvas.pack()
     canvas.focus_force()
     slushie_points_label = canvas.create_text(0, 0, text=slushie_points,
                        font=("Arial", 16, "bold"), fill="blue", anchor="nw")
     start_time  = time.time()
-    collsion = False
+    collision = False
     difficulty = 0.1
     character = canvas.create_image(100, canvas_height-128, image=rpush[0], anchor="nw")  # starting position
+    print(canvas.bbox(character))
     skate()
     run_game()
 def run_game():
-    global elapsed_time
+    global elapsed_time, collision
     if not collision:
         elapsed_time = time.time() - start_time
         difficulty = min(0.25  + 0.7 * elapsed_time / 300, 0.7)
         if random.choices([1, 0], weights=[difficulty, 1 - difficulty], k=1)[0] == 1:
             O = Obstacle(canvas)
-            s = Slushie(canvas,50,'blue')
+        if random.choices([1, 0], weights=[difficulty, 1 - difficulty], k=1)[0] == 1:
+            col = random.choice(["red","green", "blue"])
+            s = Slushie(canvas,50,col)
         print(difficulty)
         root.after(1000, run_game)
     else:
         stop_game()
 def stop_game():
-    global slushies, high_score, scores
+    global slushies, high_score, scores, canvas, hs, sl, slushie_points
     slushies += slushie_points
     if elapsed_time > high_score:
         high_score = elapsed_time
     update_scores()
-    slushies = scores["slushies"]
-    high_score = scores["high_score"]
-
     hs.config(text=f"high score: {high_score:.2f}")
     sl.config(text=f"slushies: {slushies}")
     window.deiconify()
     canvas.pack_forget()
 def update_scores():
+    global slushies, high_score, scores
     scores["slushies"] = slushies
     scores["high_score"] = high_score
     with open(score_file, "w") as f:
