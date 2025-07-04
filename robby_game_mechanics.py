@@ -242,7 +242,7 @@ def start_jump(event=None):
     coords = canvas.bbox(character)
     if not jumping and coords[3] >= ground:
         canvas.itemconfig(character, image=rjump[1])
-        dy = -20
+        dy = -18
         dy_top=dy *-1
         jumping = True
         jump()
@@ -284,7 +284,7 @@ def start_game():
     if 'canvas' in globals() and canvas.winfo_exists():
         canvas.destroy()
     canvas_width = screen_width
-    canvas_height = 200
+    canvas_height = 300
     x = (screen_width // 2) - (canvas_width // 2)
     y = (screen_height // 2) - (canvas_height // 2)
     slushie_points = 0
