@@ -268,6 +268,7 @@ def start_game():
     window.withdraw()
     canvas = tk.Canvas(root, width=screen_width, height=canvas_height, bg="white", bd=0, highlightthickness=0)
     canvas.pack()
+    canvas.focus_force()
     slushie_points_label = canvas.create_text(0, 0, text=slushie_points,
                        font=("Arial", 16, "bold"), fill="blue", anchor="nw")
     start_time  = time.time()
