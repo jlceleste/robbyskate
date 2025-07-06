@@ -211,7 +211,7 @@ class Slushie:
 class Obstacle:
     def __init__(self, canvas):
         self.canvas = canvas
-        self.obstacle = canvas.create_rectangle(screen_width, canvas_height-10, screen_width + 10, 110 , fill='pink', width=0)
+        self.obstacle = canvas.create_rectangle(screen_width, canvas_height-10, screen_width + 10, canvas_height , fill='pink', width=0)
         self.move_obstacle()
 
     def check_collision(self):
