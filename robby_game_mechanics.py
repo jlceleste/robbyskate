@@ -67,12 +67,7 @@ blue_slushie = ImageTk.PhotoImage(original_image)
 original_image = Image.open("green.png")
 original_image = original_image.resize((32, 40))
 green_slushie = ImageTk.PhotoImage(original_image)
-original_image = Image.open("houghton.png")
-original_image = original_image.resize((screen_width, 300))
-houghton = ImageTk.PhotoImage(original_image)
-original_image = Image.open("st_clair.png")
-original_image = original_image.resize((screen_width, 300))
-st_clair = ImageTk.PhotoImage(original_image)
+
 
 
 def choose_character():
@@ -84,6 +79,15 @@ def choose_character():
     select.geometry(f"{window_width}x{window_height}+{x}+{y}")
     select.wm_attributes("-transparentcolor", "grey")
     render_select()
+def choose_back():
+    global back
+    window.withdraw()
+    back = tk.Toplevel(root)
+    back.title("Choose Background")
+    back.configure(bg='red')
+    back.geometry(f"{window_width}x{window_height}+{x}+{y}")
+    back.wm_attributes("-transparentcolor", "grey")
+    render_back()
         
 def render_select():
     for widget in select.winfo_children():
@@ -130,28 +134,23 @@ def save_char(which):
 def render_back():
     buttons=[]
     char_images = []
-    bcackgrounds = [houghton, st_clair]
-    for i, (key, value) in enumerate(unlocked_characters.items()):
-        if value:
-            original_image = Image.open(key +'/icon.png')
-            photo = ImageTk.PhotoImage(original_image)
-            char_images.append(photo)
-            char_button = tk.Button(select, image=photo, command=lambda k=key: save_char(k),
-                                bg="red", bd=5)
-            char_button.image = photo 
-            char_button.grid(row=1, column=i, padx=10)
-            char_label = tk.Label(select, text = key,bg = "blue", font=("Terminal", 10), fg="white")
-            char_label.grid(row =2, column = i, padx=10, pady=10)
-        else:
-            original_image = Image.open(key +'/shadow.png')
-            photo = ImageTk.PhotoImage(original_image)
-            char_images.append(photo)
-            char_button = tk.Button(select, image=photo, command=lambda k=key: unlock(k),
-                                bg="red", bd=5)
-            char_button.image = photo
-            char_button.grid(row=1, column=i, padx=10)
-            char_label = tk.Label(select, text = "cost: 25",bg = "blue", font=("Terminal", 10), fg="white")
-            char_label.grid(row =2, column = i, padx=10,pady=10)
+    backgrounds = [houghton, st_clair]
+    for i, background in enumerate(backgrounds):
+    original_image = Image.open(background +'/icon.png')
+    photo = ImageTk.PhotoImage(original_image)
+    char_images.append(photo)
+    char_button = tk.Button(back, image=photo, command=lambda k=background: save_back(k),
+                        bg="red", bd=5)
+    char_button.image = photo 
+    char_button.grid(row=1, column=i, padx=10)
+    char_label = tk.Label(back, text = background,bg = "blue", font=("Terminal", 10), fg="white")
+    char_label.grid(row =2, column = i, padx=10, pady=10)
+def save_back(which):
+    global back_path, prop_path
+    back_path = f"{which}/background.png"
+    prop_path = f"{which}/prop.png"
+    window.deiconify()
+    back.destroy()
 ###############################################
 def load_sprites():
     global rpush, rjump 
@@ -283,7 +282,7 @@ class Obstacle:
 class Prop:
     def __init__(self, canvas):
         self.canvas = canvas
-        self.prop = canvas.create_image(screen_width, y_placement, image=color, anchor="nw")
+        self.prop = canvas.create_image(screen_width, y_placement, image=prop_path, anchor="nw")
         self.move_prop()
 
     def move_prop(self):
@@ -353,6 +352,9 @@ def start_game():
     canvas = tk.Canvas(root, width=screen_width, height=canvas_height, bg="white", bd=0, highlightthickness=0)
     canvas.pack()
     canvas.focus_force()
+    original_image = Image.open(back_path)
+    original_image = original_image.resize((screen_width, 300))
+    background = ImageTk.PhotoImage(original_image)
     background= canvas.create_image(0, canvas_height, image=st_clair, anchor="sw")
     slushie_points_label = canvas.create_text(0, 0, text=slushie_points,
                        font=("Arial", 16, "bold"), fill="blue", anchor="nw")
