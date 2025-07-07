@@ -58,8 +58,23 @@ notes_button = tk.Button(window, text="Notes", bg="red", command=show_note, bd=1
 notes_button.grid(row=2, column=1,sticky = "news")
 push_path = 'robby/push.png'
 jump_path = 'robby/jump.png'
-#original_image = Image.open()#####
-#death = ImageTk.PhotoImage(original_image)
+original_image = Image.open("red.png")
+original_image = original_image.resize((32, 40))
+red_slushie = ImageTk.PhotoImage(original_image)
+original_image = Image.open("blue.png")
+original_image = original_image.resize((32, 40))
+blue_slushie = ImageTk.PhotoImage(original_image)
+original_image = Image.open("green.png")
+original_image = original_image.resize((32, 40))
+green_slushie = ImageTk.PhotoImage(original_image)
+original_image = Image.open("houghton.png")
+original_image = original_image.resize((screen_width, 300))
+houghton = ImageTk.PhotoImage(original_image)
+original_image = Image.open("st_clair.png")
+original_image = original_image.resize((screen_width, 300))
+st_clair = ImageTk.PhotoImage(original_image)
+
+
 def choose_character():
     global select
     window.withdraw()
@@ -71,6 +86,8 @@ def choose_character():
     render_select()
         
 def render_select():
+    for widget in select.winfo_children():
+        widget.destroy()
     buttons=[]
     char_images = []
     sl = tk.Label(select, text = f"slushies: {slushies}", bg="red", font=("Terminal", 15), fg="white")
@@ -105,10 +122,36 @@ def unlock(which):
         update_scores()
         render_select()
 def save_char(which):
+    global push_path, jump_path
     push_path = f"{which}/push.png"
     jump_path = f"{which}/jump.png"
     window.deiconify()
     select.destroy()
+def render_back():
+    buttons=[]
+    char_images = []
+    bcackgrounds = [houghton, st_clair]
+    for i, (key, value) in enumerate(unlocked_characters.items()):
+        if value:
+            original_image = Image.open(key +'/icon.png')
+            photo = ImageTk.PhotoImage(original_image)
+            char_images.append(photo)
+            char_button = tk.Button(select, image=photo, command=lambda k=key: save_char(k),
+                                bg="red", bd=5)
+            char_button.image = photo 
+            char_button.grid(row=1, column=i, padx=10)
+            char_label = tk.Label(select, text = key,bg = "blue", font=("Terminal", 10), fg="white")
+            char_label.grid(row =2, column = i, padx=10, pady=10)
+        else:
+            original_image = Image.open(key +'/shadow.png')
+            photo = ImageTk.PhotoImage(original_image)
+            char_images.append(photo)
+            char_button = tk.Button(select, image=photo, command=lambda k=key: unlock(k),
+                                bg="red", bd=5)
+            char_button.image = photo
+            char_button.grid(row=1, column=i, padx=10)
+            char_label = tk.Label(select, text = "cost: 25",bg = "blue", font=("Terminal", 10), fg="white")
+            char_label.grid(row =2, column = i, padx=10,pady=10)
 ###############################################
 def load_sprites():
     global rpush, rjump 
@@ -174,7 +217,8 @@ class Slushie:
         self.canvas = canvas
         self.color = color
         self.collected = False  # ✅ Track if collected
-        self.slushie = canvas.create_oval(screen_width, y_placement, screen_width + 10, y_placement + 10, fill=color)
+        self.slushie = character = canvas.create_image(screen_width, y_placement, image=color, anchor="nw")
+        #self.slushie = canvas.create_oval(screen_width, y_placement, screen_width + 10, y_placement + 10, fill=color)
         self.move_slushie()
 
     def check_collision(self):
@@ -192,11 +236,11 @@ class Slushie:
             char_coords[3] > slu_coords[1] and char_coords[1] < slu_coords[3]):
             
             print("Slushie collected!")
-            if self.color == 'blue':
+            if self.color == blue_slushie:
                 slushie_points += 3
-            elif self.color == 'green':
+            elif self.color == green_slushie:
                 slushie_points += 2
-            elif self.color == 'red':
+            elif self.color == red_slushie:
                 slushie_points += 1
 
             canvas.itemconfig(slushie_points_label, text=slushie_points)
@@ -235,6 +279,17 @@ class Obstacle:
 
         self.check_collision()
         self.canvas.after(spf, self.move_obstacle)
+        
+class Prop:
+    def __init__(self, canvas):
+        self.canvas = canvas
+        self.prop = canvas.create_image(screen_width, y_placement, image=color, anchor="nw")
+        self.move_prop()
+
+    def move_prop(self):
+        self.canvas.move(self.prop, speed/2, 0)
+        prop_coords = self.canvas.coords(self.prop)
+        self.canvas.after(spf, self.move_prop)
 
 # Jumping logic
 def start_jump(event=None):
@@ -284,6 +339,7 @@ def start_game():
     if 'canvas' in globals() and canvas.winfo_exists():
         canvas.destroy()
     canvas_width = screen_width
+    print(screen_width)
     canvas_height = 300
     x = (screen_width // 2) - (canvas_width // 2)
     y = (screen_height // 2) - (canvas_height // 2)
@@ -297,6 +353,7 @@ def start_game():
     canvas = tk.Canvas(root, width=screen_width, height=canvas_height, bg="white", bd=0, highlightthickness=0)
     canvas.pack()
     canvas.focus_force()
+    background= canvas.create_image(0, canvas_height, image=st_clair, anchor="sw")
     slushie_points_label = canvas.create_text(0, 0, text=slushie_points,
                        font=("Arial", 16, "bold"), fill="blue", anchor="nw")
     start_time  = time.time()
@@ -313,8 +370,10 @@ def run_game():
         difficulty = min(0.25  + 0.7 * elapsed_time / 300, 0.7)
         if random.choices([1, 0], weights=[difficulty, 1 - difficulty], k=1)[0] == 1:
             O = Obstacle(canvas)
+        if random.choices([1, 0], weights=[0.2, 0.8], k=1)[0] == 1:
+            p = Prop(canvas)
         if random.choices([1, 0], weights=[difficulty, 1 - difficulty], k=1)[0] == 1:
-            col = random.choice(["red","green", "blue"])
+            col = random.choice([red_slushie,green_slushie, blue_slushie])
             s = Slushie(canvas,50,col)
         print(difficulty)
         root.after(1000, run_game)
