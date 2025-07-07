@@ -29,8 +29,14 @@ title = tk.Label(window, text = "RobbySkate", bg="red", font=("Terminal", 50), f
 title.grid(row =0, column = 0, columnspan=2, sticky = "news")
 start_button = tk.Button(window, text = "   Start Game", bd =10, bg = "blue",command = lambda:start_game(), font=("Terminal", 15), fg="white")
 start_button.grid(row =3, column = 0, columnspan = 2,sticky = "news")
-choose = tk.Button(window, text = "Character", bg = "red",command = lambda:choose_character(), bd =10,font=("Terminal", 15), fg="white")
+choose = tk.Frame(window, borderwidth=5, bg="blue", relief ='groove')
 choose.grid(row =2, column = 0,sticky = "news")
+choose.columnconfigure(0, weight=1)
+choose.columnconfigure(1, weight=1)
+char = tk.Button(choose, text = "Character", bg = "red",command = lambda:choose_character(), bd =10,font=("Terminal", 15), fg="white")
+char.grid(row =0, column = 0,sticky = "news")
+bg = tk.Button(choose, text = "Background", bg = "red",command = lambda:choose_back(), bd =10,font=("Terminal", 15), fg="white")
+bg.grid(row =0, column = 1,sticky = "news")
 # Canvas setup
 screen_width = root.winfo_screenwidth()
 score_file = "scores.json"
@@ -134,17 +140,18 @@ def save_char(which):
 def render_back():
     buttons=[]
     char_images = []
-    backgrounds = [houghton, st_clair]
+    backgrounds = ["houghton","st_clair"]
     for i, background in enumerate(backgrounds):
-    original_image = Image.open(background +'/icon.png')
-    photo = ImageTk.PhotoImage(original_image)
-    char_images.append(photo)
-    char_button = tk.Button(back, image=photo, command=lambda k=background: save_back(k),
-                        bg="red", bd=5)
-    char_button.image = photo 
-    char_button.grid(row=1, column=i, padx=10)
-    char_label = tk.Label(back, text = background,bg = "blue", font=("Terminal", 10), fg="white")
-    char_label.grid(row =2, column = i, padx=10, pady=10)
+        original_image = Image.open(background +'/icon.png')
+        original_image = original_image.resize((106, 64))
+        photo = ImageTk.PhotoImage(original_image)
+        char_images.append(photo)
+        char_button = tk.Button(back, image=photo, command=lambda k=background: save_back(k),
+                            bg="red", bd=5)
+        char_button.image = photo 
+        char_button.grid(row=1, column=i, padx=10)
+        char_label = tk.Label(back, text = background,bg = "blue", font=("Terminal", 10), fg="white")
+        char_label.grid(row =2, column = i, padx=10, pady=10)
 def save_back(which):
     global back_path, prop_path
     back_path = f"{which}/background.png"
@@ -282,7 +289,10 @@ class Obstacle:
 class Prop:
     def __init__(self, canvas):
         self.canvas = canvas
-        self.prop = canvas.create_image(screen_width, y_placement, image=prop_path, anchor="nw")
+        original_image = Image.open(prop_path)
+        #original_image = original_image.resize((384, 384))
+        photo = ImageTk.PhotoImage(resized_image)
+        self.prop = canvas.create_image(screen_width, y_placement, image=photo, anchor="nw")
         self.move_prop()
 
     def move_prop(self):
@@ -356,8 +366,8 @@ def start_game():
     original_image = original_image.resize((screen_width, 300))
     background = ImageTk.PhotoImage(original_image)
     background= canvas.create_image(0, canvas_height, image=st_clair, anchor="sw")
-    slushie_points_label = canvas.create_text(0, 0, text=slushie_points,
-                       font=("Arial", 16, "bold"), fill="blue", anchor="nw")
+    slushie_points_label = canvas.Label(0, 0, text= f'slushie points: {slushie_points}',
+                       font=("Terminal", 16, "bold"), fill="blue", anchor="nw", bg='red',fg='white')
     start_time  = time.time()
     collision = False
     difficulty = 0.1
@@ -399,4 +409,3 @@ def update_scores():
         json.dump(scores, f)
 
 root.mainloop()
- 
