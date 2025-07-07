@@ -140,7 +140,7 @@ def save_char(which):
 def render_back():
     buttons=[]
     char_images = []
-    backgrounds = ["houghton","st_clair"]
+    backgrounds = ["st_clair"]
     for i, background in enumerate(backgrounds):
         original_image = Image.open(background +'/icon.png')
         original_image = original_image.resize((106, 64))
@@ -364,10 +364,12 @@ def start_game():
     canvas.focus_force()
     original_image = Image.open(back_path)
     original_image = original_image.resize((screen_width, 300))
-    background = ImageTk.PhotoImage(original_image)
-    background= canvas.create_image(0, canvas_height, image=st_clair, anchor="sw")
-    slushie_points_label = canvas.Label(0, 0, text= f'slushie points: {slushie_points}',
-                       font=("Terminal", 16, "bold"), fill="blue", anchor="nw", bg='red',fg='white')
+    background_img = ImageTk.PhotoImage(original_image)
+    background= canvas.create_image(0, canvas_height, image=background_img, anchor="sw")
+    canvas.background_img = background_img
+    label_box = canvas.create_rectangle(0,0,200,20, fill='blue', width=0)
+    slushie_points_label = canvas.create_text(0, 0, text= f'slushie points: {slushie_points}',
+                       font=("Terminal", 16, "bold"), fill="white", anchor="nw")
     start_time  = time.time()
     collision = False
     difficulty = 0.1
@@ -382,8 +384,8 @@ def run_game():
         difficulty = min(0.25  + 0.7 * elapsed_time / 300, 0.7)
         if random.choices([1, 0], weights=[difficulty, 1 - difficulty], k=1)[0] == 1:
             O = Obstacle(canvas)
-        if random.choices([1, 0], weights=[0.2, 0.8], k=1)[0] == 1:
-            p = Prop(canvas)
+        #if random.choices([1, 0], weights=[0.2, 0.8], k=1)[0] == 1:
+            #p = Prop(canvas)
         if random.choices([1, 0], weights=[difficulty, 1 - difficulty], k=1)[0] == 1:
             col = random.choice([red_slushie,green_slushie, blue_slushie])
             s = Slushie(canvas,50,col)
