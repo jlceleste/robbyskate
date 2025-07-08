@@ -63,6 +63,8 @@ def show_note():
 notes_button = tk.Button(window, text="Notes", bg="red", command=show_note, bd=10, font=("Terminal", 15), fg="white")
 notes_button.grid(row=2, column=1,sticky = "news")
 push_path = 'robby/push.png'
+back_path = 'houghton/background.png'
+prop_path = 'houghton/prop.png'
 jump_path = 'robby/jump.png'
 original_image = Image.open("red.png")
 original_image = original_image.resize((32, 40))
@@ -106,13 +108,14 @@ def render_select():
     for i, (key, value) in enumerate(unlocked_characters.items()):
         if value:
             original_image = Image.open(key +'/icon.png')
+            original_image = original_image.crop((30,7,90,104))
             photo = ImageTk.PhotoImage(original_image)
             char_images.append(photo)
             char_button = tk.Button(select, image=photo, command=lambda k=key: save_char(k),
-                                bg="red", bd=5)
+                                bg="red", bd=0)
             char_button.image = photo 
             char_button.grid(row=1, column=i, padx=10)
-            char_label = tk.Label(select, text = key,bg = "blue", font=("Terminal", 10), fg="white")
+            char_label = tk.Label(select, text = key,bg = "blue", font=("Terminal", 20), fg="white")
             char_label.grid(row =2, column = i, padx=10, pady=10)
         else:
             original_image = Image.open(key +'/shadow.png')
@@ -122,7 +125,7 @@ def render_select():
                                 bg="red", bd=5)
             char_button.image = photo
             char_button.grid(row=1, column=i, padx=10)
-            char_label = tk.Label(select, text = "cost: 25",bg = "blue", font=("Terminal", 10), fg="white")
+            char_label = tk.Label(select, text = "cost: 25",bg = "blue", font=("Terminal", 20), fg="white")
             char_label.grid(row =2, column = i, padx=10,pady=10)
 def unlock(which):
     global slushies
@@ -140,17 +143,17 @@ def save_char(which):
 def render_back():
     buttons=[]
     char_images = []
-    backgrounds = ["st_clair"]
+    backgrounds = ["houghton", "st_clair"]
     for i, background in enumerate(backgrounds):
         original_image = Image.open(background +'/icon.png')
-        original_image = original_image.resize((106, 64))
+        original_image = original_image.resize((106*2, 64*2))
         photo = ImageTk.PhotoImage(original_image)
         char_images.append(photo)
         char_button = tk.Button(back, image=photo, command=lambda k=background: save_back(k),
                             bg="red", bd=5)
         char_button.image = photo 
         char_button.grid(row=1, column=i, padx=10)
-        char_label = tk.Label(back, text = background,bg = "blue", font=("Terminal", 10), fg="white")
+        char_label = tk.Label(back, text = background,bg = "blue", font=("Terminal", 20), fg="white")
         char_label.grid(row =2, column = i, padx=10, pady=10)
 def save_back(which):
     global back_path, prop_path
@@ -162,8 +165,8 @@ def save_back(which):
 def load_sprites():
     global rpush, rjump 
     sprite_sheet_pil = Image.open(push_path)
-    resized_image = sprite_sheet_pil.resize((256, 384))
-    sprite_sheet_image = ImageTk.PhotoImage(resized_image)
+    #resized_image = sprite_sheet_pil.resize((256, 384))
+    sprite_sheet_image = ImageTk.PhotoImage(sprite_sheet_pil)
     rpush = []
     sprite_size = 128
     sprite_count = 5
@@ -175,7 +178,7 @@ def load_sprites():
                 break
             sprite_x = j * sprite_size
             sprite_y = i * sprite_size
-            cropped_sprite_pil = resized_image.crop((
+            cropped_sprite_pil = sprite_sheet_pil.crop((
                 sprite_x, sprite_y, sprite_x + sprite_size, sprite_y + sprite_size
             ))
             cropped_sprite_tk = ImageTk.PhotoImage(cropped_sprite_pil)
@@ -187,8 +190,8 @@ def load_sprites():
 
 #############################################
     sprite_sheet_pil = Image.open(jump_path)
-    resized_image = sprite_sheet_pil.resize((384, 384))
-    sprite_sheet_image = ImageTk.PhotoImage(resized_image)
+    #sprite_sheet_pil = sprite_sheet_pil.resize((384, 384))
+    sprite_sheet_image = ImageTk.PhotoImage(sprite_sheet_pil)
     rjump = []
     sprite_size = 128
     sprite_count = 8
@@ -200,7 +203,7 @@ def load_sprites():
                 break
             sprite_x = j * sprite_size
             sprite_y = i * sprite_size
-            cropped_sprite_pil = resized_image.crop((
+            cropped_sprite_pil = sprite_sheet_pil.crop((
                 sprite_x, sprite_y, sprite_x + sprite_size, sprite_y + sprite_size
             ))
             cropped_sprite_tk = ImageTk.PhotoImage(cropped_sprite_pil)
@@ -249,7 +252,7 @@ class Slushie:
             elif self.color == red_slushie:
                 slushie_points += 1
 
-            canvas.itemconfig(slushie_points_label, text=slushie_points)
+            canvas.itemconfig(slushie_points_label, text=f'slushie points: {slushie_points}')
             canvas.delete(self.slushie)
             self.collected = True  
 
@@ -261,7 +264,7 @@ class Slushie:
 class Obstacle:
     def __init__(self, canvas):
         self.canvas = canvas
-        self.obstacle = canvas.create_rectangle(screen_width, canvas_height-10, screen_width + 10, canvas_height , fill='pink', width=0)
+        self.obstacle = canvas.create_rectangle(screen_width, canvas_height-50, screen_width + 50, canvas_height , fill='pink', width=0)
         self.move_obstacle()
 
     def check_collision(self):
@@ -270,9 +273,9 @@ class Obstacle:
             return
         char_coords = canvas.bbox(character)
         obs_coords = canvas.bbox(self.obstacle)
-
-        if (char_coords[2] > obs_coords[0] and char_coords[0] < obs_coords[2] and
-            char_coords[3] > obs_coords[1] and char_coords[1] < obs_coords[3]):
+#30,7,90,104
+        if (char_coords[2]-38 > obs_coords[0] and char_coords[0]+30 < obs_coords[2] and
+            char_coords[3]-24 > obs_coords[1] and char_coords[1]+7 < obs_coords[3]):
             canvas.pack_forget ()
             print("💥 Collision detected!")
             collision =True
@@ -287,17 +290,35 @@ class Obstacle:
         self.canvas.after(spf, self.move_obstacle)
         
 class Prop:
-    def __init__(self, canvas):
+    def __init__(self, canvas,y):
+        global background, prop_images, back_path
         self.canvas = canvas
         original_image = Image.open(prop_path)
-        #original_image = original_image.resize((384, 384))
-        photo = ImageTk.PhotoImage(resized_image)
-        self.prop = canvas.create_image(screen_width, y_placement, image=photo, anchor="nw")
+        
+        if 'houghton' in back_path:
+            original_image = original_image.resize((16, 16))
+            original_image = original_image.resize((70, 70))
+            photo = ImageTk.PhotoImage(original_image)
+            self.prop = canvas.create_image(screen_width, y, image=photo, anchor="sw")
+            self.shake = [0,0,0,-5,0,0,0,5]
+        else:
+            #original_image = original_image.resize((16, 16))
+            original_image = original_image.resize((70, 200))
+            photo = ImageTk.PhotoImage(original_image)
+            self.prop = canvas.create_image(screen_width, canvas_height, image=photo, anchor="sw")
+            self.shake = [0]
+        prop_images.append(photo)
+        canvas.tag_lower(self.prop)
+        canvas.tag_lower(background)
+        self.idx=0
         self.move_prop()
+        
 
     def move_prop(self):
-        self.canvas.move(self.prop, speed/2, 0)
+        s=self.shake[self.idx]
+        self.canvas.move(self.prop, speed/3, s)
         prop_coords = self.canvas.coords(self.prop)
+        self.idx=(self.idx + 1) % len(self.shake) 
         self.canvas.after(spf, self.move_prop)
 
 # Jumping logic
@@ -344,7 +365,7 @@ def skate(event=None):
 # Key bind
 root.bind("<space>", start_jump)
 def start_game():
-    global character, start_time, canvas, current_image_index, ground, collision, slushie_points_label, slushie_points, canvas_height,ground
+    global prop_images,character, start_time, canvas, current_image_index, ground, collision, slushie_points_label, slushie_points, canvas_height,background,ground
     if 'canvas' in globals() and canvas.winfo_exists():
         canvas.destroy()
     canvas_width = screen_width
@@ -356,6 +377,7 @@ def start_game():
     current_image_index =0
     load_sprites()
     ground = canvas_height
+    prop_images=[]
     print(ground)
     window.withdraw()
     print(screen_width)
@@ -363,6 +385,7 @@ def start_game():
     canvas.pack()
     canvas.focus_force()
     original_image = Image.open(back_path)
+    original_image = original_image.resize((int(screen_width/3), int(300/3)))
     original_image = original_image.resize((screen_width, 300))
     background_img = ImageTk.PhotoImage(original_image)
     background= canvas.create_image(0, canvas_height, image=background_img, anchor="sw")
@@ -378,14 +401,18 @@ def start_game():
     skate()
     run_game()
 def run_game():
-    global elapsed_time, collision
+    global elapsed_time, collision, speed
     if not collision:
         elapsed_time = time.time() - start_time
         difficulty = min(0.25  + 0.7 * elapsed_time / 300, 0.7)
+        #speed =max(int(-10  + -25 * elapsed_time/100), -25)
+        speed=-5
+        print(speed)
         if random.choices([1, 0], weights=[difficulty, 1 - difficulty], k=1)[0] == 1:
             O = Obstacle(canvas)
-        #if random.choices([1, 0], weights=[0.2, 0.8], k=1)[0] == 1:
-            #p = Prop(canvas)
+        if random.choices([1, 0], weights=[0.2, 0.8], k=1)[0] == 1:
+            y = random.randint(canvas_height-60,canvas_height-35)
+            p = Prop(canvas,y)
         if random.choices([1, 0], weights=[difficulty, 1 - difficulty], k=1)[0] == 1:
             col = random.choice([red_slushie,green_slushie, blue_slushie])
             s = Slushie(canvas,50,col)
