@@ -18,7 +18,7 @@ window.configure(bg='red')
 screen_width = window.winfo_screenwidth()
 screen_height = window.winfo_screenheight()
 window_width = 700
-window_height = 200
+window_height = 250
 x = (screen_width // 2) - (window_width // 2)
 y = (screen_height // 2) - (window_height // 2)
 window.columnconfigure(0, weight =1)
@@ -29,9 +29,14 @@ title = tk.Label(window, text = "RobbySkate", bg="red", font=("Terminal", 50), f
 title.grid(row =0, column = 0, columnspan=2, sticky = "news")
 start_button = tk.Button(window, text = "   Start Game", bd =10, bg = "blue",command = lambda:start_game(), font=("Terminal", 15), fg="white")
 start_button.grid(row =3, column = 0, columnspan = 2,sticky = "news")
-choose = tk.Frame(window, borderwidth=5, bg="blue", relief ='groove')
+choose = tk.Frame(window, borderwidth=5, bg="red", relief ='groove')
 choose.grid(row =2, column = 0,sticky = "news")
 choose.columnconfigure(0, weight=1)
+window.rowconfigure(1, weight=1)
+window.rowconfigure(0, weight=1)
+choose.rowconfigure(0, weight=1)
+window.rowconfigure(2, weight=1)
+window.rowconfigure(3, weight=1)
 choose.columnconfigure(1, weight=1)
 char = tk.Button(choose, text = "Character", bg = "red",command = lambda:choose_character(), bd =10,font=("Terminal", 15), fg="white")
 char.grid(row =0, column = 0,sticky = "news")
@@ -143,7 +148,7 @@ def save_char(which):
 def render_back():
     buttons=[]
     char_images = []
-    backgrounds = ["houghton", "st_clair"]
+    backgrounds = ["classic","houghton", "st_clair"]
     for i, background in enumerate(backgrounds):
         original_image = Image.open(background +'/icon.png')
         original_image = original_image.resize((106*2, 64*2))
@@ -156,9 +161,11 @@ def render_back():
         char_label = tk.Label(back, text = background,bg = "blue", font=("Terminal", 20), fg="white")
         char_label.grid(row =2, column = i, padx=10, pady=10)
 def save_back(which):
-    global back_path, prop_path
+    global back_path, prop_path, ob_paths, ob_idx
     back_path = f"{which}/background.png"
     prop_path = f"{which}/prop.png"
+    ob_paths = [f"{which}/ob1.png", f"{which}/ob2.png", f"{which}/ob3.png"]
+    ob_idx =0
     window.deiconify()
     back.destroy()
 ###############################################
@@ -226,7 +233,7 @@ class Slushie:
         self.canvas = canvas
         self.color = color
         self.collected = False  # ✅ Track if collected
-        self.slushie = character = canvas.create_image(screen_width, y_placement, image=color, anchor="nw")
+        self.slushie = canvas.create_image(screen_width, y_placement, image=color, anchor="nw")
         #self.slushie = canvas.create_oval(screen_width, y_placement, screen_width + 10, y_placement + 10, fill=color)
         self.move_slushie()
 
@@ -263,8 +270,14 @@ class Slushie:
             self.canvas.after(spf, self.move_slushie)
 class Obstacle:
     def __init__(self, canvas):
+        global ob_paths, ob_idx, canvas_height
         self.canvas = canvas
-        self.obstacle = canvas.create_rectangle(screen_width, canvas_height-50, screen_width + 50, canvas_height , fill='pink', width=0)
+        #original_image = Image.open(ob_paths[ob_idx])
+        ob_idx =(ob_idx +1) % len(ob_paths)
+        #original_image = original_image.resize((70, 70))
+        #photo = ImageTk.PhotoImage(original_image)
+        #self.obstacle = canvas.create_image(screen_width, y, image=photo, anchor="sw")
+        self.obstacle = canvas.create_rectangle(screen_width, canvas_height, screen_width + 100, canvas_height - 100, fill="red")
         self.move_obstacle()
 
     def check_collision(self):
@@ -276,16 +289,16 @@ class Obstacle:
 #30,7,90,104
         if (char_coords[2]-38 > obs_coords[0] and char_coords[0]+30 < obs_coords[2] and
             char_coords[3]-24 > obs_coords[1] and char_coords[1]+7 < obs_coords[3]):
-            canvas.pack_forget ()
             print("💥 Collision detected!")
             collision =True
             #canvas.itemconfig(character, image=death)
-            # root.destroy()  # Uncomment to stop game on collision
 
     def move_obstacle(self):
+        global collision
+        if collision:
+            return
         self.canvas.move(self.obstacle, speed, 0)
         obs_coords = self.canvas.coords(self.obstacle)
-
         self.check_collision()
         self.canvas.after(spf, self.move_obstacle)
         
@@ -315,6 +328,9 @@ class Prop:
         
 
     def move_prop(self):
+        global collision
+        if collision:
+            return
         s=self.shake[self.idx]
         self.canvas.move(self.prop, speed/3, s)
         prop_coords = self.canvas.coords(self.prop)
@@ -365,11 +381,11 @@ def skate(event=None):
 # Key bind
 root.bind("<space>", start_jump)
 def start_game():
-    global prop_images,character, start_time, canvas, current_image_index, ground, collision, slushie_points_label, slushie_points, canvas_height,background,ground
+    global prop_images,character, start_time, canvas, current_image_index, ground, collision, slushie_points_label, slushie_points, canvas_height,background,running,ground
+    running = True
     if 'canvas' in globals() and canvas.winfo_exists():
         canvas.destroy()
     canvas_width = screen_width
-    print(screen_width)
     canvas_height = 300
     x = (screen_width // 2) - (canvas_width // 2)
     y = (screen_height // 2) - (canvas_height // 2)
@@ -378,9 +394,7 @@ def start_game():
     load_sprites()
     ground = canvas_height
     prop_images=[]
-    print(ground)
     window.withdraw()
-    print(screen_width)
     canvas = tk.Canvas(root, width=screen_width, height=canvas_height, bg="white", bd=0, highlightthickness=0)
     canvas.pack()
     canvas.focus_force()
@@ -397,16 +411,16 @@ def start_game():
     collision = False
     difficulty = 0.1
     character = canvas.create_image(100, canvas_height-128, image=rpush[0], anchor="nw")  # starting position
-    print(canvas.bbox(character))
     skate()
     run_game()
 def run_game():
-    global elapsed_time, collision, speed
+    global elapsed_time, collision, speed, running
+    if not running:
+        return
     if not collision:
         elapsed_time = time.time() - start_time
         difficulty = min(0.25  + 0.7 * elapsed_time / 300, 0.7)
-        #speed =max(int(-10  + -25 * elapsed_time/100), -25)
-        speed=-5
+        speed =max(int(-10  + -25 * elapsed_time/100), -25)
         print(speed)
         if random.choices([1, 0], weights=[difficulty, 1 - difficulty], k=1)[0] == 1:
             O = Obstacle(canvas)
@@ -420,21 +434,47 @@ def run_game():
         root.after(1000, run_game)
     else:
         stop_game()
-def stop_game():
-    global slushies, high_score, scores, canvas, hs, sl, slushie_points
+def stop_game(event=None):
+    global slushies, high_score, scores, canvas, hs, sl, slushie_points, running
+    running = False
     slushies += slushie_points
+    win = "you died :("
     if elapsed_time > high_score:
+        win ="NEW HIGH SCORE"
         high_score = elapsed_time
     update_scores()
     hs.config(text=f"high score: {high_score:.2f}")
     sl.config(text=f"slushies: {slushies}")
-    window.deiconify()
     canvas.pack_forget()
+    end = tk.Toplevel(root)
+    end.title("you died")
+    end.configure(bg='blue')
+    screen_width = end.winfo_screenwidth()
+    screen_height = end.winfo_screenheight()
+    end_width = 700
+    end_height = 150
+    x = (screen_width // 2) - (end_width // 2)
+    y = (screen_height // 2) - (end_height // 2)
+    end.rowconfigure(0, weight =1)
+    end.rowconfigure(1, weight =1)
+    end.rowconfigure(2, weight =1)
+    end.rowconfigure(3, weight =1)
+    end.columnconfigure(0, weight =1)
+    end.geometry(f"{window_width}x{window_height}+{x}+{y}")
+    title = tk.Label(end, text = win, bg="blue", font=("Terminal", 50), fg="white")
+    title.grid(row =0, column = 0, sticky = "news")
+    score = tk.Label(end, text = f"score: {elapsed_time:.2f}", bg="red", font=("Terminal", 20), fg="white")
+    score.grid(row =1, column = 0)
+    points = tk.Label(end, text = f"slushies collected: {slushie_points}", bg="red", font=("Terminal", 20), fg="white")
+    points.grid(row =2, column = 0)
+    start_button = tk.Button(end, text = "ok", bd =10, bg = "blue",command = lambda: [end.destroy(),window.deiconify()], font=("Terminal", 15), fg="white")
+    start_button.grid(row =3, column = 0)
 def update_scores():
     global slushies, high_score, scores
     scores["slushies"] = slushies
     scores["high_score"] = high_score
     with open(score_file, "w") as f:
         json.dump(scores, f)
+root.bind("<BackSpace>", stop_game)
 
 root.mainloop()
