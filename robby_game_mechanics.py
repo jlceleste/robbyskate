@@ -68,9 +68,11 @@ def show_note():
 notes_button = tk.Button(window, text="Notes", bg="red", command=show_note, bd=10, font=("Terminal", 15), fg="white")
 notes_button.grid(row=2, column=1,sticky = "news")
 push_path = 'robby/push.png'
-back_path = 'houghton/background.png'
-prop_path = 'houghton/prop.png'
+back_path = 'classic/background.png'
+prop_path = 'classic/prop.png'
 jump_path = 'robby/jump.png'
+ob_paths = ["classic/ob1.png", "classic/ob2.png", "classic/ob3.png"]
+ob_idx =0
 original_image = Image.open("red.png")
 original_image = original_image.resize((32, 40))
 red_slushie = ImageTk.PhotoImage(original_image)
@@ -80,6 +82,9 @@ blue_slushie = ImageTk.PhotoImage(original_image)
 original_image = Image.open("green.png")
 original_image = original_image.resize((32, 40))
 green_slushie = ImageTk.PhotoImage(original_image)
+original_image = Image.open("death.png")
+original_image = original_image.resize((128, 128))
+death = ImageTk.PhotoImage(original_image)
 
 
 
@@ -130,13 +135,13 @@ def render_select():
                                 bg="red", bd=5)
             char_button.image = photo
             char_button.grid(row=1, column=i, padx=10)
-            char_label = tk.Label(select, text = "cost: 25",bg = "blue", font=("Terminal", 20), fg="white")
+            char_label = tk.Label(select, text = "cost: 100",bg = "blue", font=("Terminal", 20), fg="white")
             char_label.grid(row =2, column = i, padx=10,pady=10)
 def unlock(which):
     global slushies
-    if slushies >= 25:
+    if slushies >= 100:
         scores["unlocked_characters"][which]= True
-        slushies = slushies -25
+        slushies = slushies -100
         update_scores()
         render_select()
 def save_char(which):
@@ -222,9 +227,9 @@ gravity = 1
 dy = 0
 dy_top=0
 jumping = False
-fps = 60
+fps = 45
 spf = int(1000/fps)
-speed = -10
+speed = -15
 
 
 collision = False
@@ -235,6 +240,7 @@ class Slushie:
         self.collected = False  # ✅ Track if collected
         self.slushie = canvas.create_image(screen_width, y_placement, image=color, anchor="nw")
         #self.slushie = canvas.create_oval(screen_width, y_placement, screen_width + 10, y_placement + 10, fill=color)
+        self.slu_coords = canvas.bbox(self.slushie)
         self.move_slushie()
 
     def check_collision(self):
@@ -264,37 +270,48 @@ class Slushie:
             self.collected = True  
 
     def move_slushie(self):
-        if not self.collected and not collision:
+        if not self.collected and not collision and self.slu_coords[2]>0:
             self.canvas.move(self.slushie, speed, 0)
             self.check_collision()
             self.canvas.after(spf, self.move_slushie)
+        else:
+            canvas.delete(self.slushie)
+            return
 class Obstacle:
     def __init__(self, canvas):
-        global ob_paths, ob_idx, canvas_height
+        global ob_paths, ob_idx, canvas_height, ob_images
         self.canvas = canvas
-        #original_image = Image.open(ob_paths[ob_idx])
+        original_image = Image.open(ob_paths[ob_idx])
         ob_idx =(ob_idx +1) % len(ob_paths)
-        #original_image = original_image.resize((70, 70))
-        #photo = ImageTk.PhotoImage(original_image)
-        #self.obstacle = canvas.create_image(screen_width, y, image=photo, anchor="sw")
-        self.obstacle = canvas.create_rectangle(screen_width, canvas_height, screen_width + 100, canvas_height - 100, fill="red")
+        original_image = original_image.resize((300, 100))
+        photo = ImageTk.PhotoImage(original_image)
+        self.obstacle = canvas.create_image(screen_width, canvas_height, image=photo, anchor="sw")
+        ob_images.append(photo)
+        #self.obstacle = canvas.create_rectangle(screen_width, canvas_height, screen_width + 100, canvas_height - 100, fill="red")
+        self.obs_coords = canvas.bbox(self.obstacle)
         self.move_obstacle()
+        
 
     def check_collision(self):
-        global collision
+        global collision, character, canvas
         if collision:
             return
         char_coords = canvas.bbox(character)
         obs_coords = canvas.bbox(self.obstacle)
+        
 #30,7,90,104
         if (char_coords[2]-38 > obs_coords[0] and char_coords[0]+30 < obs_coords[2] and
             char_coords[3]-24 > obs_coords[1] and char_coords[1]+7 < obs_coords[3]):
+            canvas.itemconfig(character, image=death)
             print("💥 Collision detected!")
             collision =True
             #canvas.itemconfig(character, image=death)
 
     def move_obstacle(self):
         global collision
+        if self.obs_coords[2]<0:
+            canvas.delete(self.obstacle)
+            return
         if collision:
             return
         self.canvas.move(self.obstacle, speed, 0)
@@ -314,12 +331,21 @@ class Prop:
             photo = ImageTk.PhotoImage(original_image)
             self.prop = canvas.create_image(screen_width, y, image=photo, anchor="sw")
             self.shake = [0,0,0,-5,0,0,0,5]
-        else:
+            self.prop_speed=speed/3
+        elif 'st_clair' in back_path:
             #original_image = original_image.resize((16, 16))
             original_image = original_image.resize((70, 200))
             photo = ImageTk.PhotoImage(original_image)
             self.prop = canvas.create_image(screen_width, canvas_height, image=photo, anchor="sw")
             self.shake = [0]
+            self.prop_speed=speed/3
+        else:
+            original_image = original_image.resize((screen_width, canvas_height))
+            photo = ImageTk.PhotoImage(original_image)
+            self.prop = canvas.create_image(screen_width, canvas_height, image=photo, anchor="sw")
+            self.shake = [0]
+            self.prop_speed=speed*3*3
+        self.prop_coords = canvas.bbox(self.prop)
         prop_images.append(photo)
         canvas.tag_lower(self.prop)
         canvas.tag_lower(background)
@@ -329,10 +355,13 @@ class Prop:
 
     def move_prop(self):
         global collision
+        if self.prop_coords[2]<0:
+            canvas.delete(self.prop)
+            return
         if collision:
             return
         s=self.shake[self.idx]
-        self.canvas.move(self.prop, speed/3, s)
+        self.canvas.move(self.prop, self.prop_speed/3, s)
         prop_coords = self.canvas.coords(self.prop)
         self.idx=(self.idx + 1) % len(self.shake) 
         self.canvas.after(spf, self.move_prop)
@@ -343,13 +372,16 @@ def start_jump(event=None):
     coords = canvas.bbox(character)
     if not jumping and coords[3] >= ground:
         canvas.itemconfig(character, image=rjump[1])
-        dy = -18
+        dy = -23
         dy_top=dy *-1
         jumping = True
         jump()
 
 def jump():
     global dy, jumping, dy_top
+    global collision
+    if collision:
+        return
     dy += gravity
     canvas.move(character, 0, dy)
     if dy == int(dy_top * 2/3 *-1):
@@ -373,6 +405,9 @@ def jump():
         canvas.after(spf, jump)
 def skate(event=None):
     global current_image_index, current_image, character
+    global collision
+    if collision:
+        return
     if not jumping:
         current_image_index = (current_image_index + 1) % len(rpush)
         current_image = rpush[current_image_index]
@@ -381,30 +416,34 @@ def skate(event=None):
 # Key bind
 root.bind("<space>", start_jump)
 def start_game():
-    global prop_images,character, start_time, canvas, current_image_index, ground, collision, slushie_points_label, slushie_points, canvas_height,background,running,ground
+    global prop_images,character, t, start_time, canvas, current_image_index, ground, collision, slushie_points_label, slushie_points, canvas_height,background,running,ground, ob_images, jumping, dy, dy_top
     running = True
     if 'canvas' in globals() and canvas.winfo_exists():
         canvas.destroy()
     canvas_width = screen_width
-    canvas_height = 300
+    canvas_height = 400
     x = (screen_width // 2) - (canvas_width // 2)
     y = (screen_height // 2) - (canvas_height // 2)
     slushie_points = 0
+    jumping = False
+    dy = 0
+    dy_top = 0
     current_image_index =0
     load_sprites()
     ground = canvas_height
     prop_images=[]
+    ob_images=[]
     window.withdraw()
     canvas = tk.Canvas(root, width=screen_width, height=canvas_height, bg="white", bd=0, highlightthickness=0)
     canvas.pack()
     canvas.focus_force()
     original_image = Image.open(back_path)
-    original_image = original_image.resize((int(screen_width/3), int(300/3)))
-    original_image = original_image.resize((screen_width, 300))
+    original_image = original_image.resize((int(screen_width/3), int(canvas_height/3)))
+    original_image = original_image.resize((screen_width, canvas_height))
     background_img = ImageTk.PhotoImage(original_image)
     background= canvas.create_image(0, canvas_height, image=background_img, anchor="sw")
     canvas.background_img = background_img
-    label_box = canvas.create_rectangle(0,0,200,20, fill='blue', width=0)
+    label_box = canvas.create_rectangle(0,0,250,20, fill='blue', width=0)
     slushie_points_label = canvas.create_text(0, 0, text= f'slushie points: {slushie_points}',
                        font=("Terminal", 16, "bold"), fill="white", anchor="nw")
     start_time  = time.time()
@@ -414,25 +453,31 @@ def start_game():
     skate()
     run_game()
 def run_game():
-    global elapsed_time, collision, speed, running
+    global elapsed_time, collision, speed, running, canvas,t
     if not running:
+        canvas.itemconfig(character, image=death)
         return
     if not collision:
         elapsed_time = time.time() - start_time
-        difficulty = min(0.25  + 0.7 * elapsed_time / 300, 0.7)
-        speed =max(int(-10  + -25 * elapsed_time/100), -25)
+        difficulty = min(0.40  + 0.9 * elapsed_time / 200, 0.9)
+        speed =int(-15  + -50 * elapsed_time/100)
         print(speed)
+        t = max(int(1500  - 500 * elapsed_time / 200), 1000)
+        print(t)
         if random.choices([1, 0], weights=[difficulty, 1 - difficulty], k=1)[0] == 1:
             O = Obstacle(canvas)
-        if random.choices([1, 0], weights=[0.2, 0.8], k=1)[0] == 1:
+        if random.choices([1, 0], weights=[0.2, 0.8], k=1)[0] == 1 and 'classic' not in back_path :
             y = random.randint(canvas_height-60,canvas_height-35)
             p = Prop(canvas,y)
+        elif 'classic' in back_path:
+            p = Prop(canvas,0)
         if random.choices([1, 0], weights=[difficulty, 1 - difficulty], k=1)[0] == 1:
             col = random.choice([red_slushie,green_slushie, blue_slushie])
             s = Slushie(canvas,50,col)
         print(difficulty)
-        root.after(1000, run_game)
+        root.after(t, run_game)
     else:
+        canvas.itemconfig(character, image=death)
         stop_game()
 def stop_game(event=None):
     global slushies, high_score, scores, canvas, hs, sl, slushie_points, running
