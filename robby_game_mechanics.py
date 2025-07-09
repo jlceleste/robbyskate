@@ -60,13 +60,13 @@ def show_note():
     note.geometry(f"{200}x{200}+{x+window_width}+{y}")
     note.resizable(False, False)
 
-    tk.Label(note, text="Robby Tip:\nCollect slushies to unlock characters!", 
-             bg="lightyellow", font=("Terminal", 12), wraplength=220, justify="left").pack(pady=10, padx=10)
+    tk.Label(note, text="Hi baby! I'm sorry you're skating regular in the game, but dw cause you're always skating goofy in my heart <3", 
+             bg="lightyellow", font=("Terminal", 12), wraplength=200, justify="left").pack(pady=10, padx=10)
     tk.Button(note, text="Close", command=note.destroy, font=("Terminal", 10), bg="blue", fg="white").pack(pady=5)
 
 # Add this to your layout:
 notes_button = tk.Button(window, text="Notes", bg="red", command=show_note, bd=10, font=("Terminal", 15), fg="white")
-notes_button.grid(row=2, column=1,sticky = "news")
+notes_button.grid(row=2, column=1)
 push_path = 'robby/push.png'
 back_path = 'classic/background.png'
 prop_path = 'classic/prop.png'
