@@ -72,6 +72,7 @@ back_path = 'classic/background.png'
 prop_path = 'classic/prop.png'
 jump_path = 'robby/jump.png'
 ob_paths = ["classic/ob1.png", "classic/ob2.png", "classic/ob3.png"]
+big = False
 ob_idx =0
 original_image = Image.open("red.png")
 original_image = original_image.resize((32, 40))
@@ -94,7 +95,6 @@ def choose_character():
     select = tk.Toplevel(root)
     select.title("Choose Character")
     select.configure(bg='red')
-    select.geometry(f"{window_width}x{window_height}+{x}+{y}")
     select.wm_attributes("-transparentcolor", "grey")
     render_select()
 def choose_back():
@@ -103,40 +103,68 @@ def choose_back():
     back = tk.Toplevel(root)
     back.title("Choose Background")
     back.configure(bg='red')
-    back.geometry(f"{window_width}x{window_height}+{x}+{y}")
+    #back.geometry(f"{window_width}x{window_height}+{x}+{y}")
     back.wm_attributes("-transparentcolor", "grey")
     render_back()
         
 def render_select():
+    global select, big
     for widget in select.winfo_children():
         widget.destroy()
     buttons=[]
     char_images = []
-    sl = tk.Label(select, text = f"slushies: {slushies}", bg="red", font=("Terminal", 15), fg="white")
-    sl.grid(row =0, column = 0, columnspan = 2,sticky = "news")
+    sl = tk.Label(select, text = f"slushies: {slushies}", bg="blue", font=("Terminal", 15), fg="white")
+    sl.grid(row =0, column = 0, columnspan = 2, sticky = 'w')
     unlocked_characters = scores["unlocked_characters"]
+    h=183
     for i, (key, value) in enumerate(unlocked_characters.items()):
         if value:
-            original_image = Image.open(key +'/icon.png')
-            original_image = original_image.crop((30,7,90,104))
-            photo = ImageTk.PhotoImage(original_image)
-            char_images.append(photo)
-            char_button = tk.Button(select, image=photo, command=lambda k=key: save_char(k),
-                                bg="red", bd=0)
-            char_button.image = photo 
-            char_button.grid(row=1, column=i, padx=10)
-            char_label = tk.Label(select, text = key,bg = "blue", font=("Terminal", 20), fg="white")
-            char_label.grid(row =2, column = i, padx=10, pady=10)
+            if key == "big_robby":
+                h= 460
+                original_image = Image.open(key +'/icon.png')
+                original_image = original_image.crop((160,60,320,430))
+                original_image = original_image.resize((160, 400))
+                photo = ImageTk.PhotoImage(original_image)
+                char_images.append(photo)
+                char_button = tk.Button(select, image=photo, command=lambda k=key: save_char(k),
+                                    bg="white", bd=5)
+                char_button.image = photo 
+                char_button.grid(row=0, column=i, rowspan=3,padx=10)
+                char_label = tk.Label(select, text = key,bg = "blue", font=("Terminal", 20), fg="white")
+                char_label.grid(row =3, column = i, padx=10, pady=10)
+            else:
+                original_image = Image.open(key +'/icon.png')
+                original_image = original_image.crop((30,7,90,104))
+                original_image = original_image.resize((60, 97))
+                photo = ImageTk.PhotoImage(original_image)
+                char_images.append(photo)
+                char_button = tk.Button(select, image=photo, command=lambda k=key: save_char(k),
+                                    bg="white", bd=5)
+                char_button.image = photo 
+                char_button.grid(row=1, column=i, padx=10)
+                char_label = tk.Label(select, text = key,bg = "blue", font=("Terminal", 20), fg="white")
+                char_label.grid(row =2, column = i, padx=10, pady=10)
         else:
             original_image = Image.open(key +'/shadow.png')
+            original_image = original_image.resize((128, 128))
+            original_image = original_image.crop((30,7,90,104))
+            original_image = original_image.resize((60, 97))
             photo = ImageTk.PhotoImage(original_image)
             char_images.append(photo)
             char_button = tk.Button(select, image=photo, command=lambda k=key: unlock(k),
-                                bg="red", bd=5)
+                                bg="white", bd=5)
             char_button.image = photo
             char_button.grid(row=1, column=i, padx=10)
             char_label = tk.Label(select, text = "cost: 100",bg = "blue", font=("Terminal", 20), fg="white")
             char_label.grid(row =2, column = i, padx=10,pady=10)
+    select.update_idletasks()
+    w = 1058
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+    x = (screen_width // 2) - (w // 2)
+    y = (screen_height // 2) - (h // 2)
+    select.geometry(f"{w}x{h}+{x}+{y}")
+    select.update_idletasks()
 def unlock(which):
     global slushies
     if slushies >= 100:
@@ -145,12 +173,17 @@ def unlock(which):
         update_scores()
         render_select()
 def save_char(which):
-    global push_path, jump_path
+    global push_path, jump_path, big
     push_path = f"{which}/push.png"
     jump_path = f"{which}/jump.png"
+    if which == "big_robby":
+        big = True
+    else:
+        big = False
     window.deiconify()
     select.destroy()
 def render_back():
+    global back
     buttons=[]
     char_images = []
     backgrounds = ["classic","houghton", "st_clair"]
@@ -160,11 +193,21 @@ def render_back():
         photo = ImageTk.PhotoImage(original_image)
         char_images.append(photo)
         char_button = tk.Button(back, image=photo, command=lambda k=background: save_back(k),
-                            bg="red", bd=5)
+                            bg="white", bd=10)
         char_button.image = photo 
-        char_button.grid(row=1, column=i, padx=10)
+        char_button.grid(row=1, column=i, padx=10, pady = 10)
         char_label = tk.Label(back, text = background,bg = "blue", font=("Terminal", 20), fg="white")
         char_label.grid(row =2, column = i, padx=10, pady=10)
+        
+    back.update_idletasks()
+    w = back.winfo_width()
+    h = back.winfo_height()
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+    x = (screen_width // 2) - (w // 2)
+    y = (screen_height // 2) - (h // 2)
+    back.geometry(f"{w}x{h}+{x}+{y}")
+    back.update_idletasks()
 def save_back(which):
     global back_path, prop_path, ob_paths, ob_idx
     back_path = f"{which}/background.png"
@@ -175,12 +218,15 @@ def save_back(which):
     back.destroy()
 ###############################################
 def load_sprites():
-    global rpush, rjump 
+    global rpush, rjump, big, sprite_size
     sprite_sheet_pil = Image.open(push_path)
     #resized_image = sprite_sheet_pil.resize((256, 384))
     sprite_sheet_image = ImageTk.PhotoImage(sprite_sheet_pil)
     rpush = []
-    sprite_size = 128
+    if big:
+       sprite_size = 512
+    else:
+        sprite_size = 128
     sprite_count = 5
     sprites_added = 0
 
@@ -205,7 +251,7 @@ def load_sprites():
     #sprite_sheet_pil = sprite_sheet_pil.resize((384, 384))
     sprite_sheet_image = ImageTk.PhotoImage(sprite_sheet_pil)
     rjump = []
-    sprite_size = 128
+    #sprite_size = 128
     sprite_count = 8
     sprites_added = 0
 
@@ -221,6 +267,7 @@ def load_sprites():
             cropped_sprite_tk = ImageTk.PhotoImage(cropped_sprite_pil)
             rjump.append(cropped_sprite_tk)
             sprites_added += 1
+    sprite_size=500
 #################################################
 # Physics variables
 gravity = 1
@@ -293,15 +340,23 @@ class Obstacle:
         
 
     def check_collision(self):
-        global collision, character, canvas
+        global collision, character, canvas, big
         if collision:
             return
         char_coords = canvas.bbox(character)
         obs_coords = canvas.bbox(self.obstacle)
-        
+        a= 38
+        b = 30
+        c = 24
+        d = 7
+        if big:
+            a=a*4
+            b=b*4
+            c=c*4
+            d=d*4
 #30,7,90,104
-        if (char_coords[2]-38 > obs_coords[0] and char_coords[0]+30 < obs_coords[2] and
-            char_coords[3]-24 > obs_coords[1] and char_coords[1]+7 < obs_coords[3]):
+        if (char_coords[2]-a > obs_coords[0] and char_coords[0]+b < obs_coords[2] and
+            char_coords[3]-c > obs_coords[1] and char_coords[1]+d < obs_coords[3]):
             canvas.itemconfig(character, image=death)
             print("💥 Collision detected!")
             collision =True
@@ -378,7 +433,7 @@ def start_jump(event=None):
         jump()
 
 def jump():
-    global dy, jumping, dy_top
+    global dy, jumping, dy_top, sprite_size
     global collision
     if collision:
         return
@@ -398,7 +453,7 @@ def jump():
         canvas.itemconfig(character, image=rjump[7])
     coords = coords = canvas.bbox(character)
     if coords[3] >= ground: 
-        canvas.coords(character, coords[0], ground - 128)
+        canvas.coords(character, coords[0], ground - sprite_size)
         dy = 0
         jumping = False
     else:
@@ -416,7 +471,7 @@ def skate(event=None):
 # Key bind
 root.bind("<space>", start_jump)
 def start_game():
-    global prop_images,character, t, start_time, canvas, current_image_index, ground, collision, slushie_points_label, slushie_points, canvas_height,background,running,ground, ob_images, jumping, dy, dy_top
+    global prop_images,character,sprite_size, t, start_time, canvas, current_image_index, ground, collision, slushie_points_label, slushie_points, canvas_height,background,running,ground, ob_images, jumping, dy, dy_top
     running = True
     if 'canvas' in globals() and canvas.winfo_exists():
         canvas.destroy()
@@ -449,7 +504,7 @@ def start_game():
     start_time  = time.time()
     collision = False
     difficulty = 0.1
-    character = canvas.create_image(100, canvas_height-128, image=rpush[0], anchor="nw")  # starting position
+    character = canvas.create_image(100, canvas_height - sprite_size, image=rpush[0], anchor="nw")  # starting position
     skate()
     run_game()
 def run_game():
@@ -460,7 +515,7 @@ def run_game():
     if not collision:
         elapsed_time = time.time() - start_time
         difficulty = min(0.40  + 0.9 * elapsed_time / 200, 0.9)
-        speed =int(-15  + -50 * elapsed_time/100)
+        speed =int(-20  + -50 * elapsed_time/100)
         print(speed)
         t = max(int(1500  - 500 * elapsed_time / 200), 1000)
         print(t)
