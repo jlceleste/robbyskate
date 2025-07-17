@@ -267,7 +267,6 @@ def load_sprites():
             cropped_sprite_tk = ImageTk.PhotoImage(cropped_sprite_pil)
             rjump.append(cropped_sprite_tk)
             sprites_added += 1
-    sprite_size=500
 #################################################
 # Physics variables
 gravity = 1
